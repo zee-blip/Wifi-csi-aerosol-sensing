@@ -1,4 +1,3 @@
-@
 # Edge Deployment
 
 This folder contains the Raspberry Pi edge-side scripts for Wi-Fi CSI based aerosol sensing and classification.
