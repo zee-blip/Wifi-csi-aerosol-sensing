@@ -1,20 +1,38 @@
 # Edge Deployment
 
-This folder contains Python scripts for Raspberry Pi-based edge inference.
+This folder contains the Raspberry Pi edge-side scripts for Wi-Fi CSI based aerosol sensing and classification.
 
-The current goal is to deploy a lightweight classifier trained from CSI features. The first edge deployment version will use pre-extracted 250-dimensional CSI feature vectors as input.
-
-## Planned Edge Workflow
-
-```text
-Load trained model
-→ Load 250-dimensional CSI feature vector
-→ Predict aerosol class
-→ Output concentration level
-```
+The edge pipeline has been extended from offline feature replay to recorded pcap replay and real-time Nexmon CSI inference.
 
 ## Current Status
 
-- MATLAB offline model evaluation: completed
-- Python edge inference script: planned
-- Raspberry Pi deployment test: planned
+The edge deployment pipeline is working.
+
+Completed milestones:
+
+- LSVM model training in Docker
+- LSVM parameter export for Raspberry Pi deployment
+- CSV feature replay inference on Rx Pi
+- pcap-based Nexmon CSI decoding and inference on Rx Pi
+- MATLAB-style 250-dimensional feature extraction on Rx Pi
+- Live Nexmon CSI inference on Rx Pi
+- MQTT prediction publishing from Rx Pi to AP gateway
+
+The Rx Raspberry Pi is not only forwarding data. It performs local CSI feature extraction and local model inference. Only the prediction result is sent to the AP gateway.
+
+## Edge Inference Pipeline
+
+```text
+Tx Wi-Fi traffic
+        ↓
+Rx Nexmon CSI capture
+        ↓
+CSI amplitude extraction
+        ↓
+128-packet windowing
+        ↓
+MATLAB-style feature extraction
+        ↓
+NumPy-based LSVM inference
+        ↓
+MQTT publish to AP gateway

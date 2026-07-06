@@ -1,95 +1,117 @@
 # Low-Cost Wi-Fi CSI Based Aerosol Sensing Prototype
 
-This project implements an offline MATLAB reproduction of a Wi-Fi CSI-based aerosol sensing pipeline. It uses Channel State Information (CSI) extracted from commodity Wi-Fi hardware to classify aerosol concentration levels.
+This project implements a low-cost Wi-Fi CSI aerosol sensing prototype using Raspberry Pi, Nexmon CSI, MATLAB-style CSI feature extraction, lightweight machine learning, and MQTT-based edge reporting.
 
-The current implementation focuses on CSI processing, feature extraction, and machine learning evaluation. A future extension will port the trained model to Raspberry Pi for edge inference.
+The current version has been extended from offline CSI processing to real-time edge inference on the Rx Raspberry Pi.
+
+## Project Overview
+
+The system uses Wi-Fi Channel State Information (CSI) to characterize aerosol-related changes in the wireless channel.
+
+The prototype consists of three main nodes:
+
+- **Tx Raspberry Pi**: generates Wi-Fi traffic using continuous ping packets
+- **Rx Raspberry Pi**: captures Nexmon CSI, extracts CSI features, and performs local inference
+- **AP Raspberry Pi**: works as the gateway and MQTT broker
+
+The Rx node performs local feature extraction and local model inference. Only compact prediction results are published to the AP gateway through MQTT.
+
+## System Pipeline
+
+```text
+Tx Wi-Fi traffic
+        ↓
+Rx Nexmon CSI capture
+        ↓
+CSI amplitude extraction
+        ↓
+128-packet windowing
+        ↓
+MATLAB-style feature extraction
+        ↓
+NumPy-based LSVM inference
+        ↓
+MQTT prediction publishing
+        ↓
+AP gateway
+```
+
+## Feature Extraction
+
+Each prediction sample is generated from a 128-packet CSI window.
+
+The feature vector has 250 dimensions:
+
+- 242 CSI amplitude features from effective OFDM subcarriers
+- 8 statistical features:
+  - mean
+  - max
+  - min
+  - standard deviation
+  - variance
+  - MAD
+  - skewness
+  - kurtosis
+
+The Python edge-side feature extraction follows the MATLAB offline processing style, including windowing, Hampel filtering, and moving average smoothing.
+
+## Edge Deployment
+
+Instead of deploying a scikit-learn joblib object directly to the Raspberry Pi, the LSVM model is exported as lightweight numerical parameters:
+
+- standardization mean
+- standardization scale
+- LSVM weights
+- LSVM bias
+- class labels
+
+The Rx Raspberry Pi performs inference using NumPy only. This avoids cross-platform compatibility issues between Windows/Docker and the 32-bit ARM Raspberry Pi.
+
+## Completed Milestones
+
+- Offline MATLAB CSI feature extraction
+- Docker-based LSVM training
+- LSVM parameter export for edge deployment
+- CSV feature replay inference on Rx Pi
+- pcap-based CSI decoding and inference
+- MATLAB-style feature extraction on Rx Pi
+- Live Nexmon CSI inference on Rx Pi
+- MQTT-based prediction publishing to AP gateway
 
 ## Current Status
 
-- Offline MATLAB CSI processing: completed
-- Feature extraction from CSI amplitude: completed
-- KNN and standardized LSVM evaluation: completed
-- Raspberry Pi edge deployment: in progress
-- Robustness testing: planned
+The real-time edge inference pipeline is working.
 
-## Processing Pipeline
+The Rx Raspberry Pi can process live Nexmon CSI packets, generate 250-dimensional features, perform local LSVM classification, and publish JSON prediction results to the AP gateway.
 
-Raw PCAP files are processed through the following pipeline:
-
-```text
-PCAP parsing
-→ CSI amplitude extraction
-→ Windowing
-→ Hampel filtering
-→ Moving average smoothing
-→ Statistical feature extraction
-→ Machine learning classification
-```
-
-## Dataset Summary
-
-Nine valid experimental trials were used after excluding one incomplete trial.
-
-| Item | Value |
-|---|---:|
-| Valid trials | 9 |
-| Classes | 6 |
-| Total samples | 84,348 |
-| Samples per class | 14,058 |
-| Feature dimension | 250 |
-
-## Machine Learning Results
-
-The dataset was evaluated using 100 random splits. In each split, 10% of the samples were used for training and 90% were used for verification.
-
-| Model | Average Accuracy | Minimum Accuracy | Maximum Accuracy |
-|---|---:|---:|---:|
-| KNN | 99.22% | 99.04% | 99.37% |
-| Standardized LSVM | 96.06% | 92.12% | 97.72% |
-
-## Key Findings
-
-- KNN achieved the highest and most stable classification performance.
-- Standardized LSVM also achieved high accuracy and provides a lighter model structure for potential edge deployment.
-- The LSVM model was sensitive to feature scaling, so feature standardization was required before training.
-- The results suggest that Wi-Fi CSI amplitude features contain distinguishable information related to aerosol concentration levels.
-
-## Planned Edge Deployment
-
-The next stage is to deploy a trained lightweight classifier to Raspberry Pi. The planned edge workflow is:
-
-```text
-Extracted 250-dimensional CSI feature vector
-→ Load trained model on Raspberry Pi
-→ Predict aerosol class
-→ Output concentration level
-```
+The current focus has shifted from deployment feasibility to improving real-time prediction stability and generalization accuracy.
 
 ## Repository Structure
 
 ```text
-Wifi-csi-aerosol-sensing/
-├── README.md
-├── src/
-├── scripts/
-├── edge/
-├── results/
-├── docs/
-└── data_sample/
+edge/
+├── train_lsvm_export_params.py
+├── train_lsvm_full_export_params.py
+├── lsvm_param_publisher.py
+├── pcap_lsvm_matlab_style_publisher.py
+├── live_lsvm_matlab_style_publisher.py
+└── start_live_csi.sh
+
+docs/
+├── system_architecture.md
+└── edge_deployment_summary.md
+
+gateway/
+└── mqtt_notes.md
+
+results/
+└── live_inference_sample.md
 ```
 
-## Notes
+## Future Work
 
-Raw PCAP files and full MATLAB datasets are not included due to file size limitations. This repository focuses on the processing workflow, code structure, machine learning results, and future edge deployment.
-
-## Skills Demonstrated
-
-- Wi-Fi CSI sensing
-- Raspberry Pi-based wireless sensing
-- Nexmon CSI data collection
-- MATLAB signal processing
-- CSI amplitude feature extraction
-- KNN and LSVM classification
-- Model evaluation over repeated random splits
-- GitHub project documentation
-- Planned Raspberry Pi edge inference
+- Improve real-time prediction stability
+- Validate live CSI features against MATLAB-generated features
+- Add newly collected live deployment data to the training set
+- Evaluate trial-wise generalization instead of only random train/test split
+- Add dashboard visualization on the AP gateway
