@@ -16,5 +16,5 @@ Load trained model
 ## Current Status
 
 - MATLAB offline model evaluation: completed
-- Python edge inference script: planned
-- Raspberry Pi deployment test: planned
+- Python edge inference script: completed
+- Raspberry Pi deployment test: completed
