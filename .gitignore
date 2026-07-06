@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Large CSI / experiment files
+*.pcap
+*.pcapng
+*.mat
+*.mexw64
+*.joblib
+
+# Full datasets
+data_sample/X_all_features.csv
+data_sample/Y_all_labels.csv
+
+# Local test folders
+pcap_test/
+pcap_live_check/
+csi_stage2_test/
+edge_export/
+
+# Logs and temporary result files
+*.log
+results/*.csv
+results/*.jsonl
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Docker / temporary
+*.tar
